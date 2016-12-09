@@ -44,6 +44,23 @@ from __future__ import print_function
 
 import sys
 
+import csv
+import json
+import httplib
+import datetime
+
+
+# dataset;subscriber;TAC;type;timestamp;unix;latitude;longitude
+
+def sendToDashBoard(obj):
+    conn = httplib.HTTPConnection("asdasd.hu", 19200)
+    json_data = json.dumps(obj)
+    print(json_data)
+    conn.request("POST", "/geo-aggregate/sample", json_data)
+    resp = conn.getresponse()
+    return resp.read()
+
+
 
 outputPath = '~/tmp/streamingdemo/output'
 delimiter = ';'
@@ -79,6 +96,7 @@ def main():
                           .updateStateByKey(updateFunc, initialRDD=initialStateRDD)
 
     running_counts.pprint()
+
     """
     def echo(time, rdd):
         counts = "Counts at time %s %s" % (time, rdd.collect())
@@ -93,7 +111,15 @@ def main():
 
 
 
+
 if __name__ == "__main__":
     #tuple = getSubscriberAndLocation('10.03;580C1941;35512407;1;2016-10-03T05:44:06;1475466246;47.748206;18.504456')
     #print(tuple[1])
-    main()
+    ts = datetime.datetime.now().isoformat()
+    obj = [
+        {"location": {"lat": 47.748206, "lon": 18.504456},"count": 13, 'timestamp': ts},
+        {"location": {"lat": 47.537370, "lon": 19.138583}, "count": 45, 'timestamp': ts},
+    ]
+    for o in obj:
+        print(sendToDashBoard(o))
+    #main()
