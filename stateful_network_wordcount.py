@@ -26,18 +26,39 @@
  To run this on your local machine, you need to first run a Netcat server
     `$ nc -lk 9999`
  and then run the example
-    $ bin/spark-submit examples/src/main/python/streaming/stateful_network_wordcount.py localhost 9999
+/Users/pbarna/Desktop/apache-source/spark-2.0.2-bin-hadoop2.7/bin/spark-submit stateful_network_wordcount.py localhost 9999
+
+    lines:
+dataset;subscriber;TAC;type;timestamp;unix;latitude;longitude
+10.03;580C1941;35512407;1;2016-10-03T08:13:25;1475475205;47.603111;19.060024
+10.03;580C1941;35512407;1;2016-10-03T06:16:05;1475468165;47.748206;18.504456
+10.03;580C1941;35512407;1;2016-10-03T14:02:40;1475496160;47.537370;19.138583
+10.03;580C1941;35512407;1;2016-10-03T19:48:10;1475516890;47.537370;19.138583
+10.03;580C1941;35512407;1;2016-10-03T19:37:10;1475516230;47.538025;19.149754
+10.03;580C1941;35512407;1;2016-10-03T14:01:02;1475496062;47.538025;19.149754
+10.03;580C1941;35512407;3;2016-10-03T06:26:54;1475468814;47.748206;18.504456
+10.03;580C1941;35512407;3;2016-10-03T05:51:23;1475466683;47.748206;18.504456
+10.03;580C1941;35512407;1;2016-10-03T05:44:06;1475466246;47.748206;18.504456
 """
 from __future__ import print_function
 
 import sys
 
-from pyspark import SparkContext
-from pyspark.streaming import StreamingContext
 
 outputPath = '~/tmp/streamingdemo/output'
+delimiter = ';'
 
-if __name__ == "__main__":
+def getSubscriberAndLocation(line):
+    vals = line.split(delimiter)
+    if not vals or len(vals) < 7:
+        return None, None
+    else:
+        return vals[0]+'-'+vals[1], vals[6]+'-'+vals[7]
+
+def main():
+    from pyspark import SparkContext
+    from pyspark.streaming import StreamingContext
+
     if len(sys.argv) != 3:
         print("Usage: stateful_network_wordcount.py <hostname> <port>", file=sys.stderr)
         exit(-1)
@@ -46,14 +67,15 @@ if __name__ == "__main__":
     ssc.checkpoint("checkpoint")
 
     # RDD with initial state (key, value) pairs
-    initialStateRDD = sc.parallelize([(u'hello', 1), (u'world', 1)])
+    initialStateRDD = sc.parallelize([])
 
     def updateFunc(new_values, last_sum):
         return sum(new_values) + (last_sum or 0)
 
     lines = ssc.socketTextStream(sys.argv[1], int(sys.argv[2]))
-    running_counts = lines.flatMap(lambda line: line.split(" "))\
-                          .map(lambda word: (word, 1))\
+    # lambda line: getSubscriberAndLocation(line))\
+    running_counts = lines.map(getSubscriberAndLocation) \
+                          .map(lambda tuple: (tuple[1], 1))\
                           .updateStateByKey(updateFunc, initialRDD=initialStateRDD)
 
     running_counts.pprint()
@@ -68,3 +90,10 @@ if __name__ == "__main__":
     """
     ssc.start()
     ssc.awaitTermination()
+
+
+
+if __name__ == "__main__":
+    #tuple = getSubscriberAndLocation('10.03;580C1941;35512407;1;2016-10-03T05:44:06;1475466246;47.748206;18.504456')
+    #print(tuple[1])
+    main()
