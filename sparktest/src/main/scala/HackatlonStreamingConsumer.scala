@@ -45,7 +45,7 @@ object HackatlonStreamingConsumer {
     val cal = Calendar.getInstance();
     cal.add(Calendar.HOUR, -1);
     val format = new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm")
-    val conf = new SparkConf().setMaster("local[200 ]").setAppName("HackatlonStreaming")
+    val conf = new SparkConf().setMaster("local[200]").setAppName("HackatlonStreaming")
     val ssc = new StreamingContext(conf, Seconds(5))
     val lines = ssc.socketTextStream("localhost", 9998)
     val records = lines
