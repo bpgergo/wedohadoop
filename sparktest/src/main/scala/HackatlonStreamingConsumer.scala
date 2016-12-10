@@ -31,13 +31,14 @@ object HackatlonStreamingConsumer {
     val post = new HttpPost("http://asdasd.hu:19200/gero-aggregate/sample")
     post.setHeader("Content-type", "application/json")
     post.setEntity(new StringEntity(message))
+    println(post)
     (new DefaultHttpClient).execute(post)
   }
 
   def main(args: Array[String]) {
     val format = new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm")
     val conf = new SparkConf().setMaster("local[2]").setAppName("HackatlonStreaming")
-    val ssc = new StreamingContext(conf, Seconds(5))
+    val ssc = new StreamingContext(conf, Seconds(60))
     val lines = ssc.socketTextStream("localhost", 9999)
     val records = lines
       .map(_.split(";"))
@@ -48,7 +49,6 @@ object HackatlonStreamingConsumer {
       .map(sendRequest)
 
 
-    wordCounts.print()
     ssc.start()
     ssc.awaitTermination()
   }
