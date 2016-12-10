@@ -31,7 +31,7 @@ object HackatlonStreamingConsumer {
   }
 
   def sendRequest(message: String) : Unit = {
-    val post = new HttpPost("http://asdasd.hu:19200/geo-aggregate/sample")
+    val post = new HttpPost("http://asdasd.hu:19200/supa-gergo/sample")
     post.setHeader("Content-type", "application/json")
     post.setEntity(new StringEntity(message))
     //println(post)
@@ -45,7 +45,7 @@ object HackatlonStreamingConsumer {
     val cal = Calendar.getInstance();
     cal.add(Calendar.HOUR, -1);
     val format = new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm")
-    val conf = new SparkConf().setMaster("local[2]").setAppName("HackatlonStreaming")
+    val conf = new SparkConf().setMaster("local[200 ]").setAppName("HackatlonStreaming")
     val ssc = new StreamingContext(conf, Seconds(5))
     val lines = ssc.socketTextStream("localhost", 9998)
     val records = lines
@@ -58,12 +58,9 @@ object HackatlonStreamingConsumer {
     def foreachFunc = (rdd: RDD[String], time: Time) => {
       //rdd.foreach(println)
 
-      var bw = new BufferedWriter(new FileWriter(time.milliseconds.toString))
-      def writeToFile(message: String) : Unit = {
-        bw.write(message+"\n")
-      }
-      rdd.foreach(writeToFile)
-      bw.close
+
+      rdd.foreach(sendRequest)
+
     }
 
     wordCounts.foreachRDD(foreachFunc)
