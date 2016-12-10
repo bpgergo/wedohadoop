@@ -33,6 +33,11 @@ def main():
 
     mess = Class(hostname, port)
     while True:
+        fname = '/Users/pbarna/Documents/gergo/bigdatahackathon/msc_weekly.csv'
+        with open(fname) as f:
+            mess.send(f.read())
+        time.sleep(1)
+
         mess.send("""10.03;580C1941;35512407;1;2016-10-03T08:13:25;1475475205;47.603111;19.060024
 10.03;580C1941;35512407;1;2016-10-03T06:16:05;1475468165;47.748206;18.504456
 10.03;580C1941;35512407;1;2016-10-03T14:02:40;1475496160;47.537370;19.138583
@@ -44,7 +49,6 @@ def main():
 10.03;580C1941;35512407;1;2016-10-03T05:44:06;1475466246;47.748206;18.504456
 """)
         time.sleep(1)
-
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)

@@ -44,33 +44,56 @@ from __future__ import print_function
 
 import sys
 
-import csv
 import json
 import httplib
-import datetime
+from datetime import datetime, timedelta
 
 
-# dataset;subscriber;TAC;type;timestamp;unix;latitude;longitude
 
 def sendToDashBoard(obj):
     conn = httplib.HTTPConnection("asdasd.hu", 19200)
-    json_data = json.dumps(obj)
+    json_data = json.dumps(convertFrame(obj))
     print(json_data)
     conn.request("POST", "/geo-aggregate/sample", json_data)
     resp = conn.getresponse()
-    return resp.read()
+    print(resp.read())
 
 
+def sendallToDashBoard(rdd):
+    for obj in rdd.take(rdd.count()):
+        sendToDashBoard(obj)
 
-outputPath = '~/tmp/streamingdemo/output'
+
+#outputPath = '~/tmp/streamingdemo/output'
 delimiter = ';'
 
-def getSubscriberAndLocation(line):
-    vals = line.split(delimiter)
-    if not vals or len(vals) < 7:
+def parseLine(line):
+    """
+    :param line:
+    '10.03;580C1941;35512407;1;2016-10-03T05:44:06;1475466246;47.748206;18.504456'
+    :return:
+
+    """
+    fields = line.split(delimiter)
+    if not fields or len(fields) < 7:
         return None, None
     else:
-        return vals[0]+'-'+vals[1], vals[6]+'-'+vals[7]
+        return {"subscriber": fields[0] + ';' + fields[1],
+                "location": fields[6] + ';' + fields[7]
+                }
+
+def convertFrame(frm):
+    """
+    (u'47.537370;19.138583', 16)
+    """
+    lat, lon = frm[0].split(';')
+    res = {'count': frm[1], 'location': {'lat': lat, 'lon': lon},
+           'timestamp': (datetime.now() + timedelta(hours=-1)).isoformat()}
+    print(res)
+    return res
+
+
+
 
 def main():
     from pyspark import SparkContext
@@ -91,35 +114,21 @@ def main():
 
     lines = ssc.socketTextStream(sys.argv[1], int(sys.argv[2]))
     # lambda line: getSubscriberAndLocation(line))\
-    running_counts = lines.map(getSubscriberAndLocation) \
-                          .map(lambda tuple: (tuple[1], 1))\
+    running_counts = lines.map(parseLine) \
+                          .map(lambda m: (m['location'], 1))\
                           .updateStateByKey(updateFunc, initialRDD=initialStateRDD)
 
-    running_counts.pprint()
+    #running_counts.pprint()
+    running_counts.foreachRDD(sendallToDashBoard)
 
-    """
-    def echo(time, rdd):
-        counts = "Counts at time %s %s" % (time, rdd.collect())
-        print(counts)
-        with open(outputPath, 'a') as f:
-            f.write(counts + "\n")
 
-    running_counts.foreachRDD(echo)
-    """
     ssc.start()
     ssc.awaitTermination()
 
 
 
-
 if __name__ == "__main__":
-    #tuple = getSubscriberAndLocation('10.03;580C1941;35512407;1;2016-10-03T05:44:06;1475466246;47.748206;18.504456')
-    #print(tuple[1])
-    ts = datetime.datetime.now().isoformat()
-    obj = [
-        {"location": {"lat": 47.748206, "lon": 18.504456},"count": 13, 'timestamp': ts},
-        {"location": {"lat": 47.537370, "lon": 19.138583}, "count": 45, 'timestamp': ts},
-    ]
-    for o in obj:
-        print(sendToDashBoard(o))
-    #main()
+    #o = parseLine('10.03;580C1941;35512407;1;2016-10-03T05:44:06;1475466246;47.748206;18.504456')
+    #print(o)
+    #print(sendToDashBoard(o))
+    main()
