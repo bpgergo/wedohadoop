@@ -50,6 +50,7 @@ def main():
         with open(fname) as f:
             mess.send(f.read())
         time.sleep(0.5)
+        sys.exit(1)
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)

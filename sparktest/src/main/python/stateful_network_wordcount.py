@@ -54,7 +54,7 @@ def sendToDashBoard(obj):
     conn = httplib.HTTPConnection("asdasd.hu", 19200)
     json_data = json.dumps(convertFrame(obj))
     print(json_data)
-    conn.request("POST", "/geo-aggregate/sample", json_data)
+    conn.request("POST", "/supa-jani/sample", json_data)
     resp = conn.getresponse()
     print(resp.read())
 
