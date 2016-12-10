@@ -3,9 +3,11 @@ import time
 import socket
 import random
 
-crm_weekly = pd.read_csv("~/wedohadoop/data/crm_weekly.csv", delimiter=";")
+folder='~/Documents/gergo/bigdatahackathon/'
+
+crm_weekly = pd.read_csv(folder + "crm_weekly.csv", delimiter=";")
 del crm_weekly["dataset"]
-msc_weekly = pd.read_csv("~/wedohadoop/data/msc_weekly.csv", delimiter=";")
+msc_weekly = pd.read_csv(folder + "msc_weekly.csv", delimiter=";")
 print(crm_weekly.head())
 print(msc_weekly.head())
 xx = msc_weekly.join(crm_weekly, lsuffix="azanyad", how="inner")
@@ -17,7 +19,7 @@ SLEEP = 0.0005;
 serversocket = socket.socket()
 # bind the socket to a public host, and a well-known port
 print("listening to connections")
-serversocket.bind(("localhost", 9999))
+serversocket.bind(("localhost", 9998))
 serversocket.listen(5)
 while True:
     # accept connections from outside
